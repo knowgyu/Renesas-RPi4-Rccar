@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Control Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 900px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            grid-template-areas:
+                "camera control"
+                "command command"
+                "prompt prompt";
+            grid-gap: 20px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #camera-feed {
+            grid-area: camera;
+            width: 640px;
+            height: 480px;
+            border: 2px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #control-panel {
+            grid-area: control;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 50px 50px 50px;
+            grid-template-rows: 50px 50px 50px;
+            gap: 10px;
+            justify-items: center;
+            align-items: center;
+        }
+
+        .control-buttons .empty {
+            visibility: hidden;
+        }
+
+        .control-buttons button {
+            width: 50px;
+            height: 50px;
+            font-size: 15px;
+            border: none;
+            border-radius: 8px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .control-buttons button:hover {
+            background-color: #0056b3;
+        }
+
+        #stop-button {
+            width: 100px;
+            height: 50px;
+            font-size: 30px;
+            border-radius: 8px;
+            background-color: #dc3545;
+            margin-top: 100px;
+        }
+
+        #stop-button:hover {
+            background-color: #b02a37;
+        }
+
+        #shutdown-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 20px;
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 25px;
+            background-color: #343a40;
+            color: white;
+            cursor: pointer;
+        }
+
+        #shutdown-button:hover {
+            background-color: #23272b;
+        }
+
+        #command-table {
+            grid-area: command;
+            border: 1px solid #333;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #prompt-input {
+            grid-area: prompt;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #prompt-input input {
+            width: 80%;
+            padding: 10px;
+            font-size: 18px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+        }
+
+        #prompt-input button {
+            margin-top: 10px;
+            width: 100px;
+            height: 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+
+        #prompt-input button:hover {
+            background-color: #218838;
+        }
+
+        #response-output {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="shutdown-button" onclick="shutdownSystem()">⏻</button>
+
+    <div class="container">
+        <div id="camera-feed">
+            <img src="http://70.12.230.177:8000/stream.mjpg" alt="Camera Feed" width="640" height="480">
+        </div>
+
+        <div id="control-panel">
+            <div class="control-buttons">
+                <div class="empty"></div>
+                <button onclick="sendAction('go')">Go</button>
+                <div class="empty"></div>
+                <button onclick="sendAction('left')">Left</button>
+                <button onclick="sendAction('middle')">Mid</button>
+                <button onclick="sendAction('right')">Right</button>
+                <div class="empty"></div>
+                <button onclick="sendAction('back')">Back</button>
+                <div class="empty"></div>
+            </div>
+            <div class="control-row">
+                <button id="stop-button" onclick="sendAction('stop')">Stop</button>
+            </div>
+        </div>
+
+        <div id="command-table">
+            <strong>Command Table:</strong><br>
+            <div id="command-data">
+                <!-- Command data will appear here -->
+            </div>
+        </div>
+
+        <div id="prompt-input">
+            <input type="text" id="prompt" placeholder="Enter your prompt to GPT-4">
+            <button onclick="sendPrompt()">Send</button>
+            <div id="response-output"></div>
+        </div>
+    </div>
+    <script>
+        // 기존 명령 전송 함수
+        function sendAction(action) {
+            fetch('/control', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ action: action }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("현재 상태:", data.status);
+                    updateCommandTable();  // 명령 실행 후 명령 테이블 업데이트
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    
+        // 시스템 종료 명령 전송 함수
+        function shutdownSystem() {
+            fetch('/shutdown', {
+                method: 'POST'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert("시스템이 종료됩니다.");
+                    } else {
+                        alert("시스템 종료 실패");
+                    }
+                })
+                .catch(error => {
+                    console.error('Shutdown Error:', error);
+                });
+        }
+    
+        // 명령 테이블을 주기적으로 갱신하는 함수
+        function updateCommandTable() {
+            fetch('/commands', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const commandData = document.getElementById('command-data');
+                    commandData.innerHTML = "";  // 기존 명령 데이터 초기화
+    
+                    data.command_history.forEach(command => {
+                        const newCommand = document.createElement('p');
+                        newCommand.textContent = `Command: ${command.command}, Time: ${command.time}`;
+                        commandData.appendChild(newCommand);
+                    });
+    
+                    // 스크롤을 맨 아래로 이동
+                    commandData.scrollTop = commandData.scrollHeight;
+                })
+                .catch(error => {
+                    console.error('Error fetching command history:', error);
+                });
+        }
+    
+        // 일정 간격으로 명령 테이블을 갱신
+        setInterval(updateCommandTable, 1000);  // 1초마다 갱신
+    
+        // OpenAI API 프롬프트 명령을 보내는 함수
+        function sendPrompt() {
+            const prompt = document.getElementById("prompt").value;
+            if (!prompt) {
+                alert("Please enter a prompt");
+                return;
+            }
+    
+            fetch('/openai', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: prompt })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.response) {
+                        const responseOutput = document.getElementById('response-output');
+                        responseOutput.textContent = data.response;
+                    } else if (data.error) {
+                        alert("Error: " + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+    
+
+</body>
+
+</html>
