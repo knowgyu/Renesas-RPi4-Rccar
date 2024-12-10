@@ -7,7 +7,6 @@
 ├── README.md
 ├── raspberrypi
 │   └── src
-│       ├── Gen_marker.py
 │       ├── aruco_detector.py
 │       ├── camera_streamer.py
 │       ├── main.py
