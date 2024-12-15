@@ -35,3 +35,5 @@
  python main.py
  ``` 
  
+## 참고
+[https://knowgyu.github.io/posts/Aruco-%EB%A7%88%EC%BB%A4%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-RC%EC%B9%B4/](https://knowgyu.github.io/posts/Aruco-%EB%A7%88%EC%BB%A4%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-RC%EC%B9%B4/)
